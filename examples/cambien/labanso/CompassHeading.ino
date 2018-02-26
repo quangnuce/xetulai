@@ -1,7 +1,10 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
- /*wiring
+ /*
+ https://learn.adafruit.com/lsm303-accelerometer-slash-compass-breakout/coding
+ Library:https://github.com/adafruit/Adafruit_LSM303DLHC
+ wiring
   3.3v-3.3v
   GND-GND
   SCL-A5
