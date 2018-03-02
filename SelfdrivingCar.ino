@@ -22,6 +22,10 @@ Các biến tính toán, trung gian:
 - Trạng thái: state =1,2,3,...
 - Cò thông báo: Đang rẽ (rotating), gặp chướng ngại vật (Ob)
 */
+float V,D,FF,FL,FR,GR,Lat,Lng;
+float Vo,RL,RR,Do,DD;
+int state;
+
 void setup() {
  BT.begin(9600);
  Serial.begin(9600);
@@ -58,12 +62,24 @@ void ThuThapDuLieu(){
 void DieuKhien(){
   //2 trường hợp: khi gặp chướng ngại vật và trường hợp còn lại, mỗi trường hợp áp dụng các luật mờ tương ứng, kết quả sau khi giải
   //mờ là vận tốc đích Vo, góc rẽ trái, phải (RL,RR)
+  //điều khiển thử nghiệm:
+  if(FF>1){
+    //di thang
+    RR=0;RF=0; Vo=5;
+  }
+  else if(FL>1){
+    RR=0;RL=20; Vo=2;
+  }
+  else if(FR>1){
+   RR=20;RF=0;Vo=2;
+  }
+
 }
 void VanHanh(){
   //gồm 2 chế độ : chế độ rẽ và chế độ đi thẳng
   //chế độ rẽ (nếu góc RL,RR đủ lớn) : căn cứ trên vận tốc đích Vo và các góc rẽ mà thiết lập điện áp trên 2 bánh
   //chế độ đi thẳng: căn cứ trên gia tốc góc để giữ cho xe chạy thẳng với tốc độ tối đa, sử dụng PCI đơn giản
-  
+  //
 }
 void thuKhoangCach(){
   //thu nhận dữ liệu từ sensor khoảng cách, cho ra các khoảng cách FF,FR,FL tính bằng m
