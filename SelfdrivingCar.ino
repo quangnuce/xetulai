@@ -65,13 +65,13 @@ void DieuKhien(){
   //điều khiển thử nghiệm:
   if(FF>1){
     //di thang
-    RR=0;RF=0; Vo=5;
+    RR=0;RF=0; Vo=1;
   }
   else if(FL>1){
-    RR=0;RL=20; Vo=2;
+    RR=0;RL=1; Vo=0.5;
   }
   else if(FR>1){
-   RR=20;RF=0;Vo=2;
+   RR=1;RF=0;Vo=0.5;
   }
 
 }
