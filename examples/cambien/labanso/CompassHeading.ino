@@ -2,6 +2,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
  /*
+
  https://learn.adafruit.com/lsm303-accelerometer-slash-compass-breakout/coding
  Library:https://github.com/adafruit/Adafruit_LSM303DLHC
  wiring
