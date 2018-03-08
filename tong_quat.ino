@@ -92,6 +92,17 @@ void ThuThapDuLieu(){
 void DieuKhien(){
   //2 trường hợp: khi gặp chướng ngại vật và trường hợp còn lại, mỗi trường hợp áp dụng các luật mờ tương ứng, kết quả sau khi giải
   //mờ là vận tốc đích Vo, góc rẽ trái, phải (RL,RR)
+  //điều khiển thử nghiệm:
+  if(FF>1){
+    //di thang
+    RR=0;RF=0; Vo=1;
+  }
+  else if(FL>1){
+    RR=0;RL=1; Vo=0.5;
+  }
+  else if(FR>1){
+   RR=1;RF=0;Vo=0.5;
+  }
 }
 void VanHanh(){
   //gồm 2 chế độ : chế độ rẽ và chế độ đi thẳng
