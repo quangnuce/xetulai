@@ -3,6 +3,15 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
+ /*
+ https://learn.adafruit.com/lsm303-accelerometer-slash-compass-breakout/coding
+ Library:https://github.com/adafruit/Adafruit_LSM303DLHC
+ wiring
+  3.3v-3.3v
+  GND-GND
+  SCL-A5 (Uno)- SCL (Mega)
+  SDA-A4 (Uno)- SDA (Mega)
+   */
 long lasttime;
 volatile int count = 0;
 
@@ -44,7 +53,7 @@ void setup()
     pinMode(trig_right,OUTPUT);
     pinMode(echo_right,INPUT); 
     pinMode(redpin,OUTPUT);       // chân của hồng ngoại
-    -----------------------------------------------------
+   
     Serial.println("Magnetometer Test"); Serial.println("");
   
   /* Initialise the sensor */
@@ -52,14 +61,15 @@ void setup()
     {
     /* There was a problem detecting the LSM303 ... check your connections */
       Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
-      while(1);
+    //  while(1);
     }
     lasttime=millis();
         pinMode(2, INPUT_PULLUP); 
     
     pinMode(18, INPUT_PULLUP); 
     //attachInterrupt(0, pulse, LOW); 
-    attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống
+   /// attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống // ham pulse chua co
+   state=1;
 
 }
 //-----------------------------------------------------------------------// 
@@ -70,6 +80,7 @@ void loop() {
   }
   else if(state==2){
     //trạng thái vận hành
+     Serial.print("State 2 ");
     ThuThapDuLieu();
     DieuKhien();
     VanHanh();
@@ -79,15 +90,25 @@ void loop() {
 /* các hàm xử lý */
 void Init(){
 //khởi tạo hệ thống , đợi để các cảm biến cho kết quả đo chính xác (trừ GPS), tính hướng đích Do
+ if(!mag.begin())
+    {
+    /* There was a problem detecting the LSM303 ... check your connections */
+      Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
+     // while(1);
+    }
+    else{
+      state=2;
+      }
+  
 }
 void ThuThapDuLieu(){
   //thu thập dữ liệu từ sensor khoảng cách
   thuKhoangCach();
   thuHuongDi();
-  thuKhoangCach();
+ // thuKhoangCach();
   thuVanToc();
-  thuToaDo();
-  thuGiaTocGoc();
+ // thuToaDo();
+ // thuGiaTocGoc();
 }
 void DieuKhien(){
   //2 trường hợp: khi gặp chướng ngại vật và trường hợp còn lại, mỗi trường hợp áp dụng các luật mờ tương ứng, kết quả sau khi giải
@@ -95,13 +116,13 @@ void DieuKhien(){
   //điều khiển thử nghiệm:
   if(FF>1){
     //di thang
-    RR=0;RF=0; Vo=1;
+    RR=0;RL=0; Vo=1;
   }
   else if(FL>1){
     RR=0;RL=1; Vo=0.5;
   }
   else if(FR>1){
-   RR=1;RF=0;Vo=0.5;
+   RR=1;RL=0;Vo=0.5;
   }
 }
 void VanHanh(){
@@ -156,6 +177,7 @@ void thuKhoangCach(){
 void thuHuongDi(){
   //thu nhận dữ liệu từ la bàn số, tính toán hướng hiện tại D và góc lệch so với hướng đích DD 
   /* Get a new sensor event */ 
+ 
   sensors_event_t event; 
   mag.getEvent(&event);
   
@@ -171,7 +193,7 @@ void thuHuongDi(){
   }
   Serial.print("Compass Heading: ");
   Serial.println(heading);
-  delay(500);
+  //delay(500);
 }
 void thuVanToc(){
   //thu nhận tốc độ hiện tại V của xe bằng encoder, quy ra m/s
