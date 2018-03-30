@@ -68,7 +68,7 @@ void setup()
     
     pinMode(18, INPUT_PULLUP); 
     //attachInterrupt(0, pulse, LOW); 
-   /// attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống // ham pulse chua co
+   attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống // ham pulse chua co
    state=1;
 
 }
@@ -205,6 +205,9 @@ void thuVanToc(){
   Serial.println(count);
   count=0;
   Serial.println(v);
+}
+void pulse() {
+   count++;
 }
 void thuToaDo(){
   //thu nhận tọa độ hiện tại, quy ra kinh độ vĩ độ Lat,Lng
