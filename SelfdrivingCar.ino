@@ -137,9 +137,9 @@ void thuKhoangCach(){
     FR = (duration_right/2/29.412/100);
     
     //front
-    int i;
+    float i;
     i=analogRead(redpin);
-    FF=(6762/(i-9))-4/100;
+    FF=((6762/(i-9))-4)/100;
     
     /* In kết quả ra Serial Monitor */
     Serial.print("front= ");
