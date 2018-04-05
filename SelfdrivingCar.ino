@@ -3,6 +3,15 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
+ /*
+ https://learn.adafruit.com/lsm303-accelerometer-slash-compass-breakout/coding
+ Library:https://github.com/adafruit/Adafruit_LSM303DLHC
+ wiring
+  3.3v-3.3v
+  GND-GND
+  SCL-A5 (Uno)- SCL (Mega)
+  SDA-A4 (Uno)- SDA (Mega)
+   */
 long lasttime;
 volatile int count = 0;
 
@@ -11,12 +20,16 @@ các hằng dùng trong chương trình
 - Pin
 - Các hệ số, vận tốc quay, tốc độ tối đa, các khoảng cách của cảm biến
 */
+#define INA 3
+#define INB 4
+#define INC 5
+#define IND 6
 const int trig_left = 10, trig_right = 11;     // chân trig của HC-SR04
 const int echo_left = 7, echo_right = 12;     // chân echo của HC-SR04
 const int redpin=0;                          // chân A0 của hồng ngoại
 float FL,FR,FF;           // biến lưu khoảng cách
 float V,D,GR,Lat,Lng;
-float Vo,RL,RR,Do,DD;
+float Vo,Va,Vb,RL,RR,Do,DD,HR;
 int state;
 
 /*
@@ -44,7 +57,7 @@ void setup()
     pinMode(trig_right,OUTPUT);
     pinMode(echo_right,INPUT); 
     pinMode(redpin,OUTPUT);       // chân của hồng ngoại
-    -----------------------------------------------------
+   
     Serial.println("Magnetometer Test"); Serial.println("");
   
   /* Initialise the sensor */
@@ -52,14 +65,15 @@ void setup()
     {
     /* There was a problem detecting the LSM303 ... check your connections */
       Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
-      while(1);
+    //  while(1);
     }
     lasttime=millis();
         pinMode(2, INPUT_PULLUP); 
     
     pinMode(18, INPUT_PULLUP); 
     //attachInterrupt(0, pulse, LOW); 
-    attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống
+   attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống // ham pulse chua co
+   state=1;
 
 }
 //-----------------------------------------------------------------------// 
@@ -70,6 +84,7 @@ void loop() {
   }
   else if(state==2){
     //trạng thái vận hành
+     Serial.println("State 2 ");
     ThuThapDuLieu();
     DieuKhien();
     VanHanh();
@@ -79,15 +94,25 @@ void loop() {
 /* các hàm xử lý */
 void Init(){
 //khởi tạo hệ thống , đợi để các cảm biến cho kết quả đo chính xác (trừ GPS), tính hướng đích Do
+ if(!mag.begin())
+    {
+    /* There was a problem detecting the LSM303 ... check your connections */
+      Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
+     // while(1);
+    }
+    else{
+      state=2;
+      }
+  
 }
 void ThuThapDuLieu(){
   //thu thập dữ liệu từ sensor khoảng cách
   thuKhoangCach();
   thuHuongDi();
-  thuKhoangCach();
+ // thuKhoangCach();
   thuVanToc();
-  thuToaDo();
-  thuGiaTocGoc();
+ // thuToaDo();
+ // thuGiaTocGoc();
 }
 void DieuKhien(){
   //2 trường hợp: khi gặp chướng ngại vật và trường hợp còn lại, mỗi trường hợp áp dụng các luật mờ tương ứng, kết quả sau khi giải
@@ -95,20 +120,61 @@ void DieuKhien(){
   //điều khiển thử nghiệm:
   if(FF>1){
     //di thang
-    RR=0;RF=0; Vo=1;
+    RR=0;RL=0; Vo=1;
   }
   else if(FL>1){
     RR=0;RL=1; Vo=0.5;
   }
   else if(FR>1){
-   RR=1;RF=0;Vo=0.5;
+   RR=1;RL=0;Vo=0.5;
   }
 }
 void VanHanh(){
   //gồm 2 chế độ : chế độ rẽ và chế độ đi thẳng
   //chế độ rẽ (nếu góc RL,RR đủ lớn) : căn cứ trên vận tốc đích Vo và các góc rẽ mà thiết lập điện áp trên 2 bánh
   //chế độ đi thẳng: căn cứ trên gia tốc góc để giữ cho xe chạy thẳng với tốc độ tối đa, sử dụng PCI đơn giản
-  
+  HR = RL - RR;
+  Vo = 130;
+  if (abs(HR) < 0.05) {
+    Va = Vb = V = Vo * (255 - 130) + 130;
+  }
+  if (abs(HR) > 0.05) {
+    if (HR < 0) {
+      Va = Vo * (225 - 130) + 130;
+      Vb = Va * 1 - abs(HR);
+    }
+    else if (HR > 0) {
+      Va = Vo * (225 - 130) + 130;
+      Vb = Va * (1 - abs(HR));
+    }
+  }
+  if (abs(HR) < 0.05) {
+
+    digitalWrite(INA, HIGH);
+    digitalWrite(INC, HIGH);
+    digitalWrite(INB, LOW);
+    digitalWrite(IND, LOW);
+    delay(100)
+    ;
+  }
+  if (abs(HR) > 0.05) {
+
+    if (HR < 0) {
+      digitalWrite (INC, HIGH);
+      digitalWrite (INA, LOW);
+      digitalWrite (INB, LOW);
+      digitalWrite (IND, LOW);
+      delay (100);
+    }
+    else if (HR > 0) {
+
+      digitalWrite (INC, LOW);
+      digitalWrite (INA, HIGH);
+      digitalWrite (INB, LOW);
+      digitalWrite (IND, LOW);
+      delay (100);
+    }
+  }
 }
 void thuKhoangCach(){
   //thu nhận dữ liệu từ sensor khoảng cách, cho ra các khoảng cách FF,FR,FL tính bằng m
@@ -156,6 +222,7 @@ void thuKhoangCach(){
 void thuHuongDi(){
   //thu nhận dữ liệu từ la bàn số, tính toán hướng hiện tại D và góc lệch so với hướng đích DD 
   /* Get a new sensor event */ 
+ 
   sensors_event_t event; 
   mag.getEvent(&event);
   
@@ -171,7 +238,7 @@ void thuHuongDi(){
   }
   Serial.print("Compass Heading: ");
   Serial.println(heading);
-  delay(500);
+  //delay(500);
 }
 void thuVanToc(){
   //thu nhận tốc độ hiện tại V của xe bằng encoder, quy ra m/s
@@ -183,6 +250,9 @@ void thuVanToc(){
   Serial.println(count);
   count=0;
   Serial.println(v);
+}
+void pulse() {
+   count++;
 }
 void thuToaDo(){
   //thu nhận tọa độ hiện tại, quy ra kinh độ vĩ độ Lat,Lng
