@@ -20,12 +20,24 @@ các hằng dùng trong chương trình
 - Pin
 - Các hệ số, vận tốc quay, tốc độ tối đa, các khoảng cách của cảm biến
 */
+#define INA 3
+#define INB 4
+#define INC 5
+#define IND 6
+
+
+
+ #define SPA 9
+ #define SPB 8
 const int trig_left = 10, trig_right = 11;     // chân trig của HC-SR04
 const int echo_left = 7, echo_right = 12;     // chân echo của HC-SR04
 const int redpin=0;                          // chân A0 của hồng ngoại
 float FL,FR,FF;           // biến lưu khoảng cách
 float V,D,GR,Lat,Lng;
-float Vo,RL,RR,Do,DD;
+float Vo,Va,Vb,RL,RR,Do,DD,HR;
+ float heading;
+float orginalDirection;
+
 int state;
 
 /*
@@ -66,9 +78,16 @@ void setup()
     lasttime=millis();
         pinMode(2, INPUT_PULLUP); 
     
-    pinMode(18, INPUT_PULLUP); 
+    //pinMode(18, INPUT_PULLUP); 
     //attachInterrupt(0, pulse, LOW); 
-   attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống // ham pulse chua co
+    pinMode(INA, OUTPUT);
+    pinMode(INB, OUTPUT);
+    pinMode(INC, OUTPUT);
+    pinMode(IND, OUTPUT);
+    pinMode(SPA,OUTPUT);
+    pinMode(SPB,OUTPUT);
+    
+    attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống
    state=1;
 
 }
@@ -82,6 +101,7 @@ void loop() {
     //trạng thái vận hành
      Serial.print("State 2 ");
     ThuThapDuLieu();
+     Serial.println("Thu thap du lieu xong");
     DieuKhien();
     VanHanh();
   }
@@ -90,6 +110,8 @@ void loop() {
 /* các hàm xử lý */
 void Init(){
 //khởi tạo hệ thống , đợi để các cảm biến cho kết quả đo chính xác (trừ GPS), tính hướng đích Do
+
+ orginalDirection=thuHuongDi();
  if(!mag.begin())
     {
     /* There was a problem detecting the LSM303 ... check your connections */
@@ -106,7 +128,7 @@ void ThuThapDuLieu(){
   thuKhoangCach();
   thuHuongDi();
  // thuKhoangCach();
-  thuVanToc();
+  //thuVanToc();
  // thuToaDo();
  // thuGiaTocGoc();
 }
@@ -114,22 +136,100 @@ void DieuKhien(){
   //2 trường hợp: khi gặp chướng ngại vật và trường hợp còn lại, mỗi trường hợp áp dụng các luật mờ tương ứng, kết quả sau khi giải
   //mờ là vận tốc đích Vo, góc rẽ trái, phải (RL,RR)
   //điều khiển thử nghiệm:
-  if(FF>1){
+  if(FF>0.6){
     //di thang
-    RR=0;RL=0; Vo=1;
+    RR=0;RL=0; Vo=0.2;
   }
   else if(FL>1){
-    RR=0;RL=1; Vo=0.5;
+    RR=0;RL=1; Vo=0.1;
   }
   else if(FR>1){
-   RR=1;RL=0;Vo=0.5;
+   RR=1;RL=0;Vo=0.1;
   }
+  if(FF<0.15)
+      Vo=-1;
+  if(FF>0.6&&FR>1&&FL>1){
+       
+  }
+  Serial.print("DeltaDirection= ");
+  Serial.println(heading-orginalDirection);
+   Serial.print("RR= ");
+    Serial.println(RR);
+     Serial.print("RL= ");
+    Serial.println(RL);
+     Serial.print("Vo= ");
+    Serial.println(Vo);
 }
 void VanHanh(){
   //gồm 2 chế độ : chế độ rẽ và chế độ đi thẳng
   //chế độ rẽ (nếu góc RL,RR đủ lớn) : căn cứ trên vận tốc đích Vo và các góc rẽ mà thiết lập điện áp trên 2 bánh
   //chế độ đi thẳng: căn cứ trên gia tốc góc để giữ cho xe chạy thẳng với tốc độ tối đa, sử dụng PCI đơn giản
-  
+HR = RL - RR;
+  //Vo = 130;
+  int Vmin=80;
+  if (abs(HR) < 0.05) {
+    Va = Vb = V = Vo * (255 - Vmin) + Vmin;
+  }
+  if (abs(HR) > 0.05) {
+    if (HR < 0) {
+      Va = Vo * (225 - Vmin) + Vmin;
+      Vb = Va * (1 - abs(HR));
+    }
+    else if (HR > 0) {
+      Vb = Vo * (225 - Vmin) + Vmin;
+      Va = Vb * (1 - abs(HR));
+    }
+  }
+  if (abs(HR) < 0.05) {
+
+    digitalWrite(INA, HIGH);
+    digitalWrite(INC, HIGH);
+    digitalWrite(INB, LOW);
+    digitalWrite(IND, LOW);
+    analogWrite(SPA, Va);
+    analogWrite(SPB, Vb);
+    delay(100)
+    ;
+  }
+  if (abs(HR) > 0.05) {
+
+    if (HR < 0) {
+      digitalWrite (INC, HIGH);
+      digitalWrite (INA, HIGH);
+      digitalWrite (INB, LOW);
+      digitalWrite (IND, LOW);
+      analogWrite(SPA, Va);
+      analogWrite(SPB, Vb);
+      delay (100);
+    }
+    else if (HR > 0) {
+
+      digitalWrite (INC, HIGH);
+      digitalWrite (INA, HIGH);
+      digitalWrite (INB, LOW);
+      digitalWrite (IND, LOW);
+      analogWrite(SPA, Va);
+      analogWrite(SPB, Vb);
+      delay (100);
+    }
+  }
+  if(Vo<0){
+       digitalWrite (INC, LOW);
+      digitalWrite (INA, LOW);
+      digitalWrite (INB, HIGH);
+      digitalWrite (IND, HIGH);
+      analogWrite(SPA, Vmin);
+      analogWrite(SPB, Vmin);
+      delay (100);
+    }
+    
+     Serial.print("HR= ");
+    Serial.println(HR);
+     Serial.print("Va= ");
+    Serial.println(Va);
+     Serial.print("Vb= ");
+    Serial.println(Vb);
+    
 }
 void thuKhoangCach(){
   //thu nhận dữ liệu từ sensor khoảng cách, cho ra các khoảng cách FF,FR,FL tính bằng m
@@ -160,8 +260,8 @@ void thuKhoangCach(){
     //front
     int i;
     i=analogRead(redpin);
-    FF=(6762/(i-9))-4/100;
-    
+    FF=((float)6762/(i-9))-4/100;
+    FF=(float)FF/100;
     /* In kết quả ra Serial Monitor */
     Serial.print("front= ");
     Serial.print(FF);
@@ -174,17 +274,17 @@ void thuKhoangCach(){
     Serial.println("m");
     delay(200);
 }
-void thuHuongDi(){
+float thuHuongDi(){
   //thu nhận dữ liệu từ la bàn số, tính toán hướng hiện tại D và góc lệch so với hướng đích DD 
   /* Get a new sensor event */ 
- 
+   Serial.print("Compass Heading: ");
   sensors_event_t event; 
   mag.getEvent(&event);
   
-  float Pi = 3.14159;
+  float Pi = 3.14159f;
   
   // Calculate the angle of the vector y,x
-  float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
+  heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
   
   // Normalize to 0-360
   if (heading < 0)
@@ -193,6 +293,7 @@ void thuHuongDi(){
   }
   Serial.print("Compass Heading: ");
   Serial.println(heading);
+  return heading;
   //delay(500);
 }
 void thuVanToc(){
@@ -206,12 +307,12 @@ void thuVanToc(){
   count=0;
   Serial.println(v);
 }
-void pulse() {
-   count++;
-}
 void thuToaDo(){
   //thu nhận tọa độ hiện tại, quy ra kinh độ vĩ độ Lat,Lng
 }
 void thuGiaTocGoc(){
   //thu nhận và tính toán gia tốc góc GR từ cảm biến gia tốc
+}
+void pulse() {
+   count++;
 }
