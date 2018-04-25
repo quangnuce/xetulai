@@ -38,6 +38,7 @@ int state;
 float dlat,dlong;
 float clat,clong;
 float TargetHeading;//heading huong dich (rad)
+TinyGPS gps;
 /*
 Các cấu trúc
 các biến số:
@@ -68,6 +69,7 @@ void setup()
     Serial.println("Magnetometer Test"); Serial.println("");
   
   /* Initialise the sensor */
+  mag.enableAutoRange(true);
     if(!mag.begin())
     {
     /* There was a problem detecting the LSM303 ... check your connections */
@@ -82,6 +84,10 @@ void setup()
    attachInterrupt(digitalPinToInterrupt(2), pulse, FALLING); //Ngắt cạnh xuống // ham pulse chua co
    state=1;
    DD=0;
+   dlat=16.892301;
+   dlong=112.672076;
+   clat=21.003998;//toa do nha A1 -DHXD
+   clong=105.841931;
    constructControl();
 }
 //-----------------------------------------------------------------------// 
@@ -117,9 +123,8 @@ void ThuThapDuLieu(){
   //thu thập dữ liệu từ sensor khoảng cách
   thuKhoangCach();
   thuHuongDi();
- // thuKhoangCach();
   thuVanToc();
- // thuToaDo();
+  thuToaDo();
  // thuGiaTocGoc();
 }
 void DieuKhien(){
@@ -138,6 +143,15 @@ void DieuKhien(){
   }*/
   //gắn dữ liệu cho NCKH.c
   //float speed;
+  Serial.print("DD before control: ");Serial.println(DD);
+  Serial.print("front= ");
+  Serial.print(FF);
+  Serial.println("m");
+  Serial.print("left= ");
+  Serial.print(FL);
+  Serial.println("m");
+  Serial.print("right= ");
+  Serial.print(FR);
   initControl(FF,FR,FL,Vo,DD);//gán rawvalue cho bên NCKH.c
   
   calControlValue();//hàm bên NKCH.c: tính các RR,RL,Vo và gán cho cấu trúc Result
@@ -158,18 +172,19 @@ void VanHanh(){
   //chế độ đi thẳng: căn cứ trên gia tốc góc để giữ cho xe chạy thẳng với tốc độ tối đa, sử dụng PCI đơn giản
   //HR = RL - RR;
   //Vo = 130;
-   int Vmin=80;
-  if (abs(HR) < 0.05) {
+   int Vmin=130;
+   float absHR=HR<0?-HR:HR;
+  if (absHR < 0.05) {
     Va = Vb = V = Vo * (255 - Vmin) + Vmin;
   }
-  if (abs(HR) > 0.05) {
+  if (absHR > 0.05) {
     if (HR < 0) {
       Va = Vo * (225 - Vmin) + Vmin;
-      Vb = Va * (1 - abs(HR));
+      Vb = Va * (1 - absHR);
     }
     else if (HR > 0) {
       Vb = Vo * (225 - Vmin) + Vmin;
-      Va = Vb * (1 - abs(HR));
+      Va = Vb * (1 - absHR);
     }
   }
   if (abs(HR) < 0.05) {
@@ -180,7 +195,7 @@ void VanHanh(){
     digitalWrite(IND, LOW);
     analogWrite(SPA, Va);
     analogWrite(SPB, Vb);
-    delay(100)
+    delay(200)
     ;
   }
   if (abs(HR) > 0.05) {
@@ -250,14 +265,7 @@ void thuKhoangCach(){
     FF=((6762/(i-9))-4)/100;
     
     /* In kết quả ra Serial Monitor */
-    Serial.print("front= ");
-    Serial.print(FF);
-    Serial.println("m");
-    Serial.print("left= ");
-    Serial.print(FL);
-    Serial.println("m");
-    Serial.print("right= ");
-    Serial.print(FR);
+
     Serial.println("m");
     //delay(200);
 }
@@ -271,15 +279,23 @@ void thuHuongDi(){
   float Pi = 3.14159;
   
   // Calculate the angle of the vector y,x
-  float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
-  
+  float heading = (atan2(event.magnetic.y-31.305,event.magnetic.x-233.26) * 180) / Pi;
+  Serial.print("MagX= ");Serial.print(event.magnetic.x-233.26);Serial.print(",MagY= ");Serial.println(event.magnetic.y-31.305);
   // Normalize to 0-360
-  if (heading < 0)
-  {
-    heading = 360 + heading;
-  }
+  //if (heading < 0)
+  //{
+   // heading = 360 + heading;
+  //}
+  //tinh chinh ve huong Bac that
+  heading=heading+86.75;
+  if(heading>180) heading=heading-360;
   Serial.print("Compass Heading: ");
   Serial.println(heading);
+  //tinh goc lech so voi goc dich
+  float delta=TargetHeading-heading;
+  Serial.print("Delta=");Serial.println(delta);
+  DD=delta/180;
+  Serial.print("DD=");Serial.println(DD);
   //delay(500);
 }
 void thuVanToc(){
@@ -301,7 +317,7 @@ void thuToaDo(){
    bool newData = false;
    while (Serial1.available())
     {
-      char c = ss.read();
+      char c = Serial1.read();
       // Serial.write(c); // uncomment this line if you want to see the GPS data flowing
       if (gps.encode(c)) // Did a new valid sentence come in?
         newData = true;
@@ -312,9 +328,9 @@ void thuToaDo(){
     unsigned long age;
     gps.f_get_position(&flat, &flon, &age);
     Serial.print("LAT=");
-    Serial.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
+    Serial.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 21.003998 : flat, 6);
     Serial.print(" LON=");
-    Serial.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
+    Serial.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 105.841931 : flon, 6);
     clat=flat ==TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat;
     clong=flon ==TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon;
     Serial.print(" SAT=");
@@ -328,11 +344,15 @@ void thuToaDo(){
    float rclong=clong*Pi/180;
    float rdlat=dlat*Pi/180;
    float rdlong=dlong*Pi/180;
+  // float deltalong=rclong>rdlong?(rclong-rdlong):(rdlong-rclong);
+  float deltalong=rdlong-rclong;
    //a - c, b- d
-   float X=cos(rdlat)*sin(abs(rclong-rdlong));
-   float Y=cos(rclat) * sin(rdlat) – sin (rclat) * cos (rdlat) * cos (abs(rclong-rdlong));
+   float X=cos(rdlat)*sin(deltalong);
+   float Y=cos(rclat) * sin(rdlat)-sin(rclat) * cos(rdlat) * cos(deltalong);
    TargetHeading=atan2(X,Y)*180/Pi;
-   
+   Serial.print(sin(deltalong));Serial.print(",");Serial.println(cos(deltalong));
+   Serial.print(" TargetHeading=");  
+   Serial.println(TargetHeading);
 }
 void thuGiaTocGoc(){
   //thu nhận và tính toán gia tốc góc GR từ cảm biến gia tốc
