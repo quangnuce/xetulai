@@ -250,10 +250,11 @@ typedef struct {
 }DirectionTarget;
 DirectionTarget direction_target;
 
-int Abs(int a){
+float Abs(float a){
   if (a<0){
     a=-a;
   }
+  return a;
 }
 void fuzzy_direction(){
   if (direction_target.rawValue < 0)
@@ -284,7 +285,7 @@ float ruleForRotation(FrontFuzzy f, LeftFuzzy l, RightFuzzy r, VelocityFuzzy v, 
     float outRotation_AvgLeft[2];//2 rule
     float outRotation_AvgRight[2];//2 rule
     float outRotation_Left[7];//2 rule
-    float outRotation_Right[7];//2 rule
+    float outRotation_Right[8];//2 rule
     float outRotation_Mid[2];//2 rule
 
     //4 luat de dam bao xe luon huong ve dich
@@ -386,7 +387,17 @@ float ruleForRotation(FrontFuzzy f, LeftFuzzy l, RightFuzzy r, VelocityFuzzy v, 
     inputRule66[0] = f.AvgF; inputRule66[1] = target.MidF; inputRule66[2] = l.LongF; inputRule66[3] = r.AvgF;
     outRotation_Left[5] = getMin(inputRule66, 4);
   printf("outRotation_Left[5]:%f\n",outRotation_Left[5]);
-
+  
+  //f=Avg&D=MidF&L=Long&R=Long->Rotation=Right
+    float inputRule67[4];
+    inputRule67[0] = f.AvgF; inputRule67[1] = target.MidF; inputRule67[2] = l.LongF; inputRule67[3] = r.LongF;
+    outRotation_Right[6] = getMin(inputRule67, 4);
+  printf("outRotation_Right[6]:%f\n",outRotation_Right[6]);
+ //f=Short&D=MidF&L=Long&R=Long->Rotation=Right
+    float inputRule68[4];
+    inputRule68[0] = f.ShortF; inputRule68[1] = target.MidF; inputRule68[2] = l.LongF; inputRule68[3] = r.LongF;
+    outRotation_Right[7] = getMin(inputRule68, 4);
+  printf("outRotation_Right[7]:%f\n",outRotation_Right[7]);
     //2 luat lam xe re khi sap va cham hai ben
     //r=Short->Rotation=Left;
     float inputRule7[2];
