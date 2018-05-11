@@ -285,7 +285,7 @@ float ruleForRotation(FrontFuzzy f, LeftFuzzy l, RightFuzzy r, VelocityFuzzy v, 
     float outRotation_AvgLeft[2];//2 rule
     float outRotation_AvgRight[2];//2 rule
     float outRotation_Left[7];//2 rule
-    float outRotation_Right[8];//2 rule
+    float outRotation_Right[9];//2 rule
     float outRotation_Mid[2];//2 rule
 
     //4 luat de dam bao xe luon huong ve dich
@@ -391,12 +391,12 @@ float ruleForRotation(FrontFuzzy f, LeftFuzzy l, RightFuzzy r, VelocityFuzzy v, 
   //f=Avg&D=MidF&L=Long&R=Long->Rotation=Right
     float inputRule67[4];
     inputRule67[0] = f.AvgF; inputRule67[1] = target.MidF; inputRule67[2] = l.LongF; inputRule67[3] = r.LongF;
-    outRotation_Right[6] = getMin(inputRule67, 4);
+    outRotation_Right[7] = getMin(inputRule67, 4);
   printf("outRotation_Right[6]:%f\n",outRotation_Right[6]);
  //f=Short&D=MidF&L=Long&R=Long->Rotation=Right
     float inputRule68[4];
     inputRule68[0] = f.ShortF; inputRule68[1] = target.MidF; inputRule68[2] = l.LongF; inputRule68[3] = r.LongF;
-    outRotation_Right[7] = getMin(inputRule68, 4);
+    outRotation_Right[8] = getMin(inputRule68, 4);
   printf("outRotation_Right[7]:%f\n",outRotation_Right[7]);
     //2 luat lam xe re khi sap va cham hai ben
     //r=Short->Rotation=Left;
@@ -412,7 +412,7 @@ float ruleForRotation(FrontFuzzy f, LeftFuzzy l, RightFuzzy r, VelocityFuzzy v, 
 
     rotation_fuzzy.AvgRightF = getMax(outRotation_AvgRight, 2);
     rotation_fuzzy.AvgLeftF = getMax(outRotation_AvgLeft, 2);
-    rotation_fuzzy.RightF = getMax(outRotation_Right, 7);
+    rotation_fuzzy.RightF = getMax(outRotation_Right, 9);
     rotation_fuzzy.LeftF = getMax(outRotation_Left, 7);
   rotation_fuzzy.MidF=target.MidF;//luat mid
     printf("%f,%f,%f,%f",rotation_fuzzy.AvgRightF,rotation_fuzzy.AvgLeftF,rotation_fuzzy.RightF,rotation_fuzzy.LeftF);
