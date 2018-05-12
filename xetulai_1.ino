@@ -70,7 +70,7 @@ void setup()
      pinMode(rpin,INPUT); 
       pinMode(lpin,INPUT);  
      // chân của hồng ngoại
-    Serial.println(TinyGPS::library_version());
+    //Serial.println(TinyGPS::library_version());
     Serial.println("Magnetometer Test"); Serial.println("");
   
   /* Initialise the sensor */
@@ -129,10 +129,11 @@ void Init(){
 void ThuThapDuLieu(){
   //thu thập dữ liệu từ sensor khoảng cách
   thuKhoangCach();
+  thuToaDo();
   thuHuongDi();
  // thuKhoangCach();
   thuVanToc();
-  thuToaDo();
+  
  // thuGiaTocGoc();
 }
 void DieuKhien(){
@@ -311,7 +312,7 @@ void thuHuongDi(){
   
   // Calculate the angle of the vector y,x
   float heading = (atan2(event.magnetic.y-31.305,event.magnetic.x-233.26) * 180) / Pi;
-  Serial.print("MagX= ");Serial.print(event.magnetic.x-233.26);Serial.print(",MagY= ");Serial.println(event.magnetic.y-31.305);
+  //Serial.print("MagX= ");Serial.print(event.magnetic.x-233.26);Serial.print(",MagY= ");Serial.println(event.magnetic.y-31.305);
   // Normalize to 0-360
   //if (heading < 0)
   //{
@@ -324,9 +325,11 @@ void thuHuongDi(){
   Serial.println(heading);
   //tinh goc lech so voi goc dich
   float delta=TargetHeading-heading;
- // Serial.print("Delta=");Serial.println(delta);
+  Serial.print("Delta=");Serial.println(delta);
+  if(delta>180) delta=-(360-delta);
+  if(delta<-180) delta=360+delta;
   DD=delta/180;
-  //Serial.print("DD=");Serial.println(DD);
+  Serial.print("DD=");Serial.println(DD);
   //delay(500);
 }
 void thuVanToc(){
@@ -358,16 +361,16 @@ void thuToaDo(){
     float flat, flon;
     unsigned long age;
     gps.f_get_position(&flat, &flon, &age);
-    Serial.print("LAT=");
-    Serial.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 21.003998 : flat, 6);
-    Serial.print(" LON=");
-    Serial.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 105.841931 : flon, 6);
+   // Serial.print("LAT=");
+   // Serial.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 21.003998 : flat, 6);
+   // Serial.print(" LON=");
+   // Serial.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 105.841931 : flon, 6);
     clat=flat ==TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat;
     clong=flon ==TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon;
-    Serial.print(" SAT=");
-    Serial.print(gps.satellites() == TinyGPS::GPS_INVALID_SATELLITES ? 0 : gps.satellites());
-    Serial.print(" PREC=");
-    Serial.print(gps.hdop() == TinyGPS::GPS_INVALID_HDOP ? 0 : gps.hdop());
+   // Serial.print(" SAT=");
+   // Serial.print(gps.satellites() == TinyGPS::GPS_INVALID_SATELLITES ? 0 : gps.satellites());
+   // Serial.print(" PREC=");
+   // Serial.print(gps.hdop() == TinyGPS::GPS_INVALID_HDOP ? 0 : gps.hdop());
   }
   //tinh goc dich
    float Pi = 3.14159;
@@ -382,8 +385,8 @@ void thuToaDo(){
    float Y=cos(rclat) * sin(rdlat)-sin(rclat) * cos(rdlat) * cos(deltalong);
    TargetHeading=atan2(X,Y)*180/Pi;
  //  Serial.print(sin(deltalong));Serial.print(",");Serial.println(cos(deltalong));
-   //Serial.print(" TargetHeading=");  
-  // Serial.println(TargetHeading);
+   Serial.print(" TargetHeading=");  
+  Serial.println(TargetHeading);
    
 }
 void thuGiaTocGoc(){
